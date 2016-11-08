@@ -8,7 +8,6 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
@@ -23,27 +22,30 @@ public class Processor extends AbstractProcessor {
         for (Element modelElement : graphQLObjectSet) {
             StringBuilder sbClass = new StringBuilder();
             String name = "GraphQL_" + getClassName(modelElement);
-            sbClass.append("package com.anthonyfdev.graphQLQueryGen.generated;\n\n")
+            sbClass.append("package com.anthonyfdev.graphQLQueryGen.models;\n\n")
                     .append("public class ")
                     .append(name)
                     .append(" {\n")
-                    .append("\tpublic String getQuery() {\n")
+                    .append("\tpublic static String getQuery() {\n")
                     .append("\t\tStringBuilder sb = new StringBuilder();\n")
-                    .append("\t\tsb.append(\"{ \");\n");
+                    .append("\t\tsb.append(\"{\\n\");\n");
             for (Element element : modelElement.getEnclosedElements()) {
-                if (graphQLObjectSet.contains(element)) {
-                    sbClass.append("\t\tsb.append(GraphQL_" + getClassName(element) + ".getQuery())");
-                } else if (isScalarType(element)) {
-                    if (element.getKind().isField()) {
+                if (element.getKind().isField()) {
+                    String fieldName = element.getSimpleName().toString();
+                    sbClass.append("\t\tsb.append(\"").append(fieldName).append(" \");\n");
+                    if (!isScalarType(element)) {
+                        sbClass.append("\t\tsb.append(com.anthonyfdev.graphQLQueryGen.models.GraphQL_")
+                                .append(getFieldType(element)).append(".getQuery());\n");
                     }
-                    sbClass.append("\t\tsb.append()");
                 }
             }
-            sbClass.append("\t\t\t.append(\"}\"")
-                    .append("\t\treturn sb.toString();\n\t}\n}");
+            sbClass.append("\t\tsb.append(\"}\");\n")
+                    .append("\t\treturn sb.toString();\n")
+                    .append("\t}\n")
+                    .append("}");
 
             try { // write the file
-                JavaFileObject source = processingEnv.getFiler().createSourceFile("com.anthonyfermin.graphQLQueryGen.generated." + name);
+                JavaFileObject source = processingEnv.getFiler().createSourceFile("com.anthonyfdev.graphQLQueryGen.models." + name);
 
 
                 Writer writer = source.openWriter();
@@ -59,16 +61,17 @@ public class Processor extends AbstractProcessor {
         return true;
     }
 
+    private String getFieldType(Element element) {
+        String verboseTypeName = element.asType().toString();
+        int idxToSplit = verboseTypeName.lastIndexOf('.') + 1;
+        return verboseTypeName.substring(idxToSplit, verboseTypeName.length());
+    }
+
     private boolean isScalarType(Element element) {
         return element.asType().getKind().isPrimitive() || getClassName(element).equals("String");
     }
 
     private String getClassName(Element modelElement) {
         return modelElement.getSimpleName().toString().replace(".class", "");
-    }
-
-    private boolean isGraphQLAnnotated(Element element) {
-        element.asType().toString();
-        return false;
     }
 }
