@@ -30,7 +30,8 @@ public class Processor extends AbstractProcessor {
                     .append("\t\tStringBuilder sb = new StringBuilder();\n")
                     .append("\t\tsb.append(\"{\\n\");\n");
             for (Element element : modelElement.getEnclosedElements()) {
-                if (element.getKind().isField()) {
+                if (element.getKind().isField()
+                        && element.getAnnotation(GraphQLField.class) != null) {
                     String fieldName = element.getSimpleName().toString();
                     sbClass.append("\t\tsb.append(\"").append(fieldName).append(" \");\n");
                     if (!isScalarType(element)) {
@@ -64,14 +65,18 @@ public class Processor extends AbstractProcessor {
     private String getFieldType(Element element) {
         String verboseTypeName = element.asType().toString();
         int idxToSplit = verboseTypeName.lastIndexOf('.') + 1;
-        return verboseTypeName.substring(idxToSplit, verboseTypeName.length());
+        return cleanType(verboseTypeName.substring(idxToSplit, verboseTypeName.length()));
     }
 
     private boolean isScalarType(Element element) {
-        return element.asType().getKind().isPrimitive() || getClassName(element).equals("String");
+        return element.asType().getKind().isPrimitive() || getFieldType(element).equals("String");
     }
 
     private String getClassName(Element modelElement) {
         return modelElement.getSimpleName().toString().replace(".class", "");
+    }
+
+    private String cleanType(String type) {
+        return type.replaceAll("[.<>]","").replaceAll("\\[", "").replaceAll("\\]", "");
     }
 }
