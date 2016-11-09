@@ -39,11 +39,10 @@ public class Processor extends AbstractProcessor {
                         && element.getAnnotation(GraphQLField.class) != null) {
                     String fieldName = element.getSimpleName().toString();
 
-                    mb.addStatement("sb.append(\" " + fieldName + " \")");
+                    mb.addStatement("sb.append(\" $L \")", fieldName);
                     if (!isScalarType(element)) {
-                        mb.addStatement("sb.append(com.anthonyfdev.graphQLQueryGen.models.GraphQL_"
-                                        + getFieldType(element)
-                                        + ".getQuery())");
+                        mb.addStatement("sb.append(com.anthonyfdev.graphQLQueryGen.models.GraphQL_$L.getQuery())"
+                                , getFieldType(element));
                     }
                 }
             }
