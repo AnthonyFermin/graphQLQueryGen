@@ -4,6 +4,7 @@ package com.anthonyfdev.graphQLQueryGen;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+import com.sun.deploy.util.StringUtils;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -25,6 +26,7 @@ public class Processor extends AbstractProcessor {
     private static final String PACKAGE_MODELS = "com.anthonyfdev.graphQLQueryGen.models";
     private static final String METHOD_GET_QUERY = "getQuery";
     private static final String MODEL_CLASS_PREFIX = "GraphQL_";
+    static final String UNASSIGNED_VALUE = "[unassigned]";
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Set<Element> graphQLObjectSet = (Set<Element>) roundEnv.getElementsAnnotatedWith(GraphQLObject.class);
@@ -41,6 +43,11 @@ public class Processor extends AbstractProcessor {
                         && element.getAnnotation(GraphQLField.class) != null) {
                     String fieldName = element.getSimpleName().toString();
                     mb.addStatement("sb.append(\" $L \")", fieldName);
+                    GraphQLField graphQLField = element.getAnnotation(GraphQLField.class);
+                    if (!graphQLField.type().isEmpty() && !graphQLField.type().equals(UNASSIGNED_VALUE)) {
+                        // use field name as alias
+                        mb.addStatement("sb.append(\": $L \")", graphQLField.type());
+                    }
                     if (!isScalarType(element)) {
                         mb.addStatement("sb.append($L.$L$L.$L())",
                                 PACKAGE_MODELS, MODEL_CLASS_PREFIX, getFieldType(element), METHOD_GET_QUERY);
