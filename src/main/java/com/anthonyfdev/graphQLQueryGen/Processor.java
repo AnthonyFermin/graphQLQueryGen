@@ -1,12 +1,17 @@
 package com.anthonyfdev.graphQLQueryGen;
 
 
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
@@ -17,40 +22,51 @@ import java.util.Set;
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class Processor extends AbstractProcessor {
 
+    private static final String MODELS_PACKAGE = "com.anthonyfdev.graphQLQueryGen.models";
+
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Set<Element> graphQLObjectSet = (Set<Element>) roundEnv.getElementsAnnotatedWith(GraphQLObject.class);
         for (Element modelElement : graphQLObjectSet) {
-            StringBuilder sbClass = new StringBuilder();
-            String name = "GraphQL_" + getClassName(modelElement);
-            sbClass.append("package com.anthonyfdev.graphQLQueryGen.models;\n\n")
-                    .append("public class ")
-                    .append(name)
-                    .append(" {\n")
-                    .append("\tpublic static String getQuery() {\n")
-                    .append("\t\tStringBuilder sb = new StringBuilder();\n")
-                    .append("\t\tsb.append(\"{\\n\");\n");
+            //building the getQuery() method
+            MethodSpec.Builder mb = MethodSpec.methodBuilder("getQuery")
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .returns(String.class)
+                    .addStatement("$T sb = new StringBuilder()", StringBuilder.class)
+                    .addStatement("sb.append(\"{ \")");
+
             for (Element element : modelElement.getEnclosedElements()) {
                 if (element.getKind().isField()
                         && element.getAnnotation(GraphQLField.class) != null) {
                     String fieldName = element.getSimpleName().toString();
-                    sbClass.append("\t\tsb.append(\"").append(fieldName).append(" \");\n");
+
+                    mb.addStatement("sb.append(\" " + fieldName + " \")");
                     if (!isScalarType(element)) {
-                        sbClass.append("\t\tsb.append(com.anthonyfdev.graphQLQueryGen.models.GraphQL_")
-                                .append(getFieldType(element)).append(".getQuery());\n");
+                        mb.addStatement("sb.append(com.anthonyfdev.graphQLQueryGen.models.GraphQL_"
+                                        + getFieldType(element)
+                                        + ".getQuery())");
                     }
                 }
             }
-            sbClass.append("\t\tsb.append(\"}\");\n")
-                    .append("\t\treturn sb.toString();\n")
-                    .append("\t}\n")
-                    .append("}");
+            mb.addStatement("sb.append(\" }\")")
+                    .addStatement("return sb.toString()");
 
-            try { // write the file
-                JavaFileObject source = processingEnv.getFiler().createSourceFile("com.anthonyfdev.graphQLQueryGen.models." + name);
+            //building class
+            String className = "GraphQL_" + getClassName(modelElement);
+            TypeSpec typeSpec = TypeSpec.classBuilder(className)
+                    .addModifiers(Modifier.PUBLIC)
+                    .addMethod(mb.build())
+                    .build();
 
+            //building class file
+            JavaFile javaFile = JavaFile.builder(MODELS_PACKAGE, typeSpec)
+                    .build();
+
+            //writing the file
+            try {
+                JavaFileObject source = processingEnv.getFiler().createSourceFile(MODELS_PACKAGE + "." + className);
 
                 Writer writer = source.openWriter();
-                writer.write(sbClass.toString());
+                writer.write(javaFile.toString());
                 writer.flush();
                 writer.close();
             } catch (IOException e) {
