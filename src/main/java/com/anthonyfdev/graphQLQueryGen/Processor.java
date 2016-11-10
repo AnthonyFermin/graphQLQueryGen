@@ -4,7 +4,10 @@ package com.anthonyfdev.graphQLQueryGen;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
-import com.sun.deploy.util.StringUtils;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -15,9 +18,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Set;
 
 @SupportedAnnotationTypes("com.anthonyfdev.graphQLQueryGen.GraphQLObject")
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
@@ -29,7 +29,7 @@ public class Processor extends AbstractProcessor {
     static final String UNASSIGNED_VALUE = "[unassigned]";
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        Set<Element> graphQLObjectSet = (Set<Element>) roundEnv.getElementsAnnotatedWith(GraphQLObject.class);
+        Set<? extends Element> graphQLObjectSet = roundEnv.getElementsAnnotatedWith(GraphQLObject.class);
         for (Element modelElement : graphQLObjectSet) {
             //building the getQuery() method
             MethodSpec.Builder mb = MethodSpec.methodBuilder(METHOD_GET_QUERY)
