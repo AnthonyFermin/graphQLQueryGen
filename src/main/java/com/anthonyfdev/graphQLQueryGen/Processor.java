@@ -48,7 +48,7 @@ public class Processor extends AbstractProcessor {
                         mb.addStatement("sb.append(\": $L \")", graphQLField.aliasType());
                     }
                     if (!isScalarType(element)) {
-                        mb.addStatement("sb.append($L.$L$L.$L())",
+                        mb.addStatement("sb.append($1L.$2L$3L.$4L())",
                                 PACKAGE_MODELS, MODEL_CLASS_PREFIX, getFieldType(element), METHOD_GET_QUERY);
                     }
                 }
@@ -57,7 +57,7 @@ public class Processor extends AbstractProcessor {
                     .addStatement("return sb.toString()");
 
             //building class
-            String className = MODEL_CLASS_PREFIX + getClassName(modelElement);
+            String className = MODEL_CLASS_PREFIX + modelElement.getSimpleName().toString();
             TypeSpec typeSpec = TypeSpec.classBuilder(className)
                     .addModifiers(Modifier.PUBLIC)
                     .addMethod(mb.build())
@@ -92,10 +92,6 @@ public class Processor extends AbstractProcessor {
 
     private boolean isScalarType(Element element) {
         return element.asType().getKind().isPrimitive() || getFieldType(element).equals("String");
-    }
-
-    private String getClassName(Element modelElement) {
-        return modelElement.getSimpleName().toString().replace(".class", "");
     }
 
     private String cleanType(String type) {

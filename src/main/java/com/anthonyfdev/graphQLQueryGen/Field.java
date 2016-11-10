@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Denotes a field to be used to generate the desired GraphQL Query
+ * Must be used to annotate a field within a class annotated with {@link GraphQLObject}
  */
 
 @Retention(RetentionPolicy.SOURCE)
