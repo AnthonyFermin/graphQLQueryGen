@@ -7,11 +7,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.FIELD)
-public @interface GraphQLField {
+public @interface FieldArguments {
 
-    /**
-     * NOTE: Will use field name as alias
-     * @return Type that is part of GraphQLSchema
-     */
-    String type() default Processor.UNASSIGNED_VALUE;
+    ArgMapping[] mappings();
+
 }

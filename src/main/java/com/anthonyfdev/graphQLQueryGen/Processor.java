@@ -4,7 +4,6 @@ package com.anthonyfdev.graphQLQueryGen;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
-import com.sun.deploy.util.StringUtils;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -35,18 +34,18 @@ public class Processor extends AbstractProcessor {
             MethodSpec.Builder mb = MethodSpec.methodBuilder(METHOD_GET_QUERY)
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .returns(String.class)
-                    .addStatement("$T sb = new StringBuilder()", StringBuilder.class)
+                    .addStatement("$1T sb = new $1T()", StringBuilder.class)
                     .addStatement("sb.append(\"{ \")");
 
             for (Element element : modelElement.getEnclosedElements()) {
                 if (element.getKind().isField()
-                        && element.getAnnotation(GraphQLField.class) != null) {
+                        && element.getAnnotation(Field.class) != null) {
                     String fieldName = element.getSimpleName().toString();
                     mb.addStatement("sb.append(\" $L \")", fieldName);
-                    GraphQLField graphQLField = element.getAnnotation(GraphQLField.class);
-                    if (!graphQLField.type().isEmpty() && !graphQLField.type().equals(UNASSIGNED_VALUE)) {
+                    Field graphQLField = element.getAnnotation(Field.class);
+                    if (!graphQLField.aliasType().isEmpty() && !graphQLField.aliasType().equals(UNASSIGNED_VALUE)) {
                         // use field name as alias
-                        mb.addStatement("sb.append(\": $L \")", graphQLField.type());
+                        mb.addStatement("sb.append(\": $L \")", graphQLField.aliasType());
                     }
                     if (!isScalarType(element)) {
                         mb.addStatement("sb.append($L.$L$L.$L())",
