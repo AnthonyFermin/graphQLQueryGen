@@ -1,5 +1,10 @@
 package com.anthonyfdev.graphQLQueryGen;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * Only to be used within {@link FieldArguments} annotations.
  *
@@ -8,6 +13,8 @@ package com.anthonyfdev.graphQLQueryGen;
  *
  * NOTE: Depending on your server's GraphQL schema, some fields are required to have arguments
  */
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.FIELD)
 public @interface ArgMapping {
 
     String param();

@@ -47,6 +47,20 @@ public class Processor extends AbstractProcessor {
                         // use field name as alias
                         mb.addStatement("sb.append(\": $L \")", graphQLField.aliasType());
                     }
+                    FieldArguments fieldArguments = element.getAnnotation(FieldArguments.class);
+                    if (fieldArguments != null) {
+                        //add arguments to field
+                        ArgMapping[] mappings = fieldArguments.mappings();
+                        mb.addStatement("sb.append(\"(\")");
+                        for (int idx = 0; idx < mappings.length; idx++) {
+                            ArgMapping mapping = mappings[idx];
+                            mb.addStatement("sb.append(\"$1L : \\\"$2L\\\"\")", mapping.param(), mapping.value());
+                            if (idx < mappings.length - 1) {
+                                mb.addStatement("sb.append(\", \")");
+                            }
+                        }
+                        mb.addStatement("sb.append(\")\")");
+                    }
                     if (!isScalarType(element)) {
                         mb.addStatement("sb.append($1L.$2L$3L.$4L())",
                                 PACKAGE_MODELS, MODEL_CLASS_PREFIX, getFieldType(element), METHOD_GET_QUERY);
@@ -95,6 +109,6 @@ public class Processor extends AbstractProcessor {
     }
 
     private String cleanType(String type) {
-        return type.replaceAll("[.<>]","").replaceAll("\\[", "").replaceAll("\\]", "");
+        return type.replaceAll("[.<>]", "").replaceAll("\\[", "").replaceAll("\\]", "");
     }
 }
