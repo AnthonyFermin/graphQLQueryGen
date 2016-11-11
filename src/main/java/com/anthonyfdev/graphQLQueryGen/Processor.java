@@ -40,71 +40,84 @@ public class Processor extends AbstractProcessor {
             for (Element element : modelElement.getEnclosedElements()) {
                 if (element.getKind().isField()
                         && element.getAnnotation(Field.class) != null) {
-                    String fieldName = element.getSimpleName().toString();
-                    mb.addStatement("sb.append(\" $L \")", fieldName);
-                    Field graphQLField = element.getAnnotation(Field.class);
-                    if (!graphQLField.aliasType().isEmpty() && !graphQLField.aliasType().equals(UNASSIGNED_VALUE)) {
-                        // use field name as alias
-                        mb.addStatement("sb.append(\": $L \")", graphQLField.aliasType());
-                    }
-                    FieldArguments fieldArguments = element.getAnnotation(FieldArguments.class);
-                    if (fieldArguments != null) {
-                        //add arguments to field
-                        ArgMapping[] mappings = fieldArguments.mappings();
-                        mb.addStatement("sb.append(\"(\")");
-                        for (int idx = 0; idx < mappings.length; idx++) {
-                            ArgMapping mapping = mappings[idx];
 
-                            mb.addStatement("sb.append(\"$L : \")", mapping.param());
-                            if (mapping.isString()) {
-                                mb.addStatement("sb.append(\"\\\"\")");
-                            }
-                            mb.addStatement("sb.append(\"$L\")", mapping.value());
-                            if (mapping.isString()) {
-                                mb.addStatement("sb.append(\"\\\"\")");
-                            }
-
-                            if (idx < mappings.length - 1) {
-                                mb.addStatement("sb.append(\", \")");
-                            }
-                        }
-                        mb.addStatement("sb.append(\")\")");
-                    }
-                    if (!isScalarType(element)) {
-                        mb.addStatement("sb.append($1L.$2L$3L.$4L())",
-                                PACKAGE_MODELS, MODEL_CLASS_PREFIX, getFieldType(element), METHOD_GET_QUERY);
-                    }
+                    // adds alias, field name and arguments
+                    addFieldLine(element, mb);
+                    // adds field body
+                    addFieldBody(element, mb);
                 }
             }
             mb.addStatement("sb.append(\" }\")")
                     .addStatement("return sb.toString()");
-
-            //building class
-            String className = MODEL_CLASS_PREFIX + modelElement.getSimpleName().toString();
-            TypeSpec typeSpec = TypeSpec.classBuilder(className)
-                    .addModifiers(Modifier.PUBLIC)
-                    .addMethod(mb.build())
-                    .build();
-
-            //building class file
-            JavaFile javaFile = JavaFile.builder(PACKAGE_MODELS, typeSpec)
-                    .build();
-
-            //writing the file
-            try {
-                JavaFileObject source = processingEnv.getFiler().createSourceFile(PACKAGE_MODELS + "." + className);
-
-                Writer writer = source.openWriter();
-                writer.write(javaFile.toString());
-                writer.flush();
-                writer.close();
-            } catch (IOException e) {
-                // Note: calling e.printStackTrace() will print IO errors
-                // that occur from the file already existing after its first run, this is normal
-            }
-
+            writeClassFile(modelElement, mb);
         }
         return true;
+    }
+
+    private void writeClassFile(Element modelElement, MethodSpec.Builder mb) {
+        //building class
+        String className = MODEL_CLASS_PREFIX + modelElement.getSimpleName().toString();
+        TypeSpec typeSpec = TypeSpec.classBuilder(className)
+                .addModifiers(Modifier.PUBLIC)
+                .addMethod(mb.build())
+                .build();
+
+        //building class file
+        JavaFile javaFile = JavaFile.builder(PACKAGE_MODELS, typeSpec)
+                .build();
+
+        //writing the file
+        try {
+            JavaFileObject source = processingEnv.getFiler().createSourceFile(PACKAGE_MODELS + "." + className);
+
+            Writer writer = source.openWriter();
+            writer.write(javaFile.toString());
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            // Note: calling e.printStackTrace() will print IO errors
+            // that occur from the file already existing after its first run, this is normal
+        }
+    }
+
+    private void addFieldBody(Element element, MethodSpec.Builder mb) {
+        if (!isScalarType(element)) {
+            mb.addStatement("sb.append($1L.$2L$3L.$4L())",
+                    PACKAGE_MODELS, MODEL_CLASS_PREFIX, getFieldType(element), METHOD_GET_QUERY);
+        }
+    }
+
+    private void addFieldLine(Element element, MethodSpec.Builder mb) {
+        String fieldName = element.getSimpleName().toString();
+        mb.addStatement("sb.append(\" $L \")", fieldName);
+        Field graphQLField = element.getAnnotation(Field.class);
+        if (!graphQLField.aliasType().isEmpty() && !graphQLField.aliasType().equals(UNASSIGNED_VALUE)) {
+            // use field name as alias
+            mb.addStatement("sb.append(\": $L \")", graphQLField.aliasType());
+        }
+        FieldArguments fieldArguments = element.getAnnotation(FieldArguments.class);
+        if (fieldArguments != null) {
+            //add arguments to field
+            ArgMapping[] mappings = fieldArguments.mappings();
+            mb.addStatement("sb.append(\"(\")");
+            for (int idx = 0; idx < mappings.length; idx++) {
+                ArgMapping mapping = mappings[idx];
+
+                mb.addStatement("sb.append(\"$L : \")", mapping.param());
+                if (mapping.isString()) {
+                    mb.addStatement("sb.append(\"\\\"\")");
+                }
+                mb.addStatement("sb.append(\"$L\")", mapping.value());
+                if (mapping.isString()) {
+                    mb.addStatement("sb.append(\"\\\"\")");
+                }
+
+                if (idx < mappings.length - 1) {
+                    mb.addStatement("sb.append(\", \")");
+                }
+            }
+            mb.addStatement("sb.append(\")\")");
+        }
     }
 
     private String getFieldType(Element element) {
