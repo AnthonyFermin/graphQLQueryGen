@@ -54,7 +54,16 @@ public class Processor extends AbstractProcessor {
                         mb.addStatement("sb.append(\"(\")");
                         for (int idx = 0; idx < mappings.length; idx++) {
                             ArgMapping mapping = mappings[idx];
-                            mb.addStatement("sb.append(\"$1L : \\\"$2L\\\"\")", mapping.param(), mapping.value());
+
+                            mb.addStatement("sb.append(\"$L : \")", mapping.param());
+                            if (mapping.isString()) {
+                                mb.addStatement("sb.append(\"\\\"\")");
+                            }
+                            mb.addStatement("sb.append(\"$L\")", mapping.value());
+                            if (mapping.isString()) {
+                                mb.addStatement("sb.append(\"\\\"\")");
+                            }
+
                             if (idx < mappings.length - 1) {
                                 mb.addStatement("sb.append(\", \")");
                             }
