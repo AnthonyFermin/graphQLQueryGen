@@ -40,7 +40,7 @@ public class Processor extends AbstractProcessor {
 
             for (Element element : modelElement.getEnclosedElements()) {
                 if (element.getKind().isField()
-                        && element.getAnnotation(Field.class) != null) {
+                        && element.getAnnotation(GraphQLField.class) != null) {
 
                     // adds alias, field name and arguments
                     addFieldLine(element, mb);
@@ -91,7 +91,7 @@ public class Processor extends AbstractProcessor {
     private void addFieldLine(Element element, MethodSpec.Builder mb) {
         String fieldName = element.getSimpleName().toString();
         mb.addStatement("sb.append(\" $L \")", fieldName);
-        Field graphQLField = element.getAnnotation(Field.class);
+        GraphQLField graphQLField = element.getAnnotation(GraphQLField.class);
         if (!graphQLField.aliasType().isEmpty() && !graphQLField.aliasType().equals(UNASSIGNED_VALUE)) {
             // use field name as alias
             mb.addStatement("sb.append(\": $L \")", graphQLField.aliasType());

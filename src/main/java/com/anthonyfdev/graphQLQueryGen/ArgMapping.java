@@ -3,7 +3,7 @@ package com.anthonyfdev.graphQLQueryGen;
 import java.lang.annotation.*;
 
 /**
- * Only to be used within {@link Field} annotations.
+ * Only to be used within {@link GraphQLField} annotations.
  * <p>
  * An annotation containing a mandatory param-value pair to be used as an argument(s) for the annotated field in the GraphQLQuery.
  * This is an optional annotation for adding arguments to a specific field. The value can be of String (see {@link #isString()}),
