@@ -13,3 +13,37 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
     compile 'com.squareup:javapoet:1.7.0'
 }
+
+// This puts all of the jar files into one folder, called 'out'.
+tasks.withType(Jar) {
+    destinationDir = file("$rootDir/out")
+}
+
+// This is an alternate implementation of the 'javadoc' task
+task javadocX(type: Javadoc) {
+    source = sourceSets.main.allJava
+    classpath += configurations.compile
+    // If we didn't specify this, destinationDir would be inaccessible
+    // from the javadocJar task.
+    destinationDir = file("./javadoc/")
+    failOnError false
+}
+
+// Simple task to bundle up the javadocX outputs
+task javadocJar(type: Jar, dependsOn: javadocX) {
+    classifier = 'javadoc'
+    //noinspection GroovyAssignabilityCheck - we know destinationDir is a directory
+    from javadocX.destinationDir
+}
+
+// A proper sources jar, with comments
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+// Request sources and javadoc artifacts
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
