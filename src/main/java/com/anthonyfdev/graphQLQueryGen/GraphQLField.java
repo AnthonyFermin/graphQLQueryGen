@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
  *    {@literal @}GraphQLField
  *     public float height;
  *
- *    {@literal @}GraphQLField(type = "isKnown")
+ *    {@literal @}GraphQLField(aliasType = "isKnown")
  *     public boolean available;
  * }
  * </pre>
