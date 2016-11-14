@@ -95,13 +95,12 @@ public class Processor extends AbstractProcessor {
             // use field name as alias
             mb.addStatement("sb.append(\": $L \")", graphQLField.aliasType());
         }
-        FieldArguments fieldArguments = element.getAnnotation(FieldArguments.class);
-        if (fieldArguments != null) {
-            //add arguments to field
-            ArgMapping[] mappings = fieldArguments.mappings();
+        //add arguments to field
+        ArgMapping[] argMappings = graphQLField.arguments();
+        if (argMappings.length > 0) {
             mb.addStatement("sb.append(\"(\")");
-            for (int idx = 0; idx < mappings.length; idx++) {
-                ArgMapping mapping = mappings[idx];
+            for (int idx = 0; idx < argMappings.length; idx++) {
+                ArgMapping mapping = argMappings[idx];
 
                 mb.addStatement("sb.append(\"$L : \")", mapping.param());
                 if (mapping.isString()) {
@@ -112,7 +111,7 @@ public class Processor extends AbstractProcessor {
                     mb.addStatement("sb.append(\"\\\"\")");
                 }
 
-                if (idx < mappings.length - 1) {
+                if (idx < argMappings.length - 1) {
                     mb.addStatement("sb.append(\", \")");
                 }
             }

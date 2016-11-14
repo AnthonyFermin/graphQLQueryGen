@@ -20,4 +20,9 @@ public @interface Field {
      */
     String aliasType() default Processor.UNASSIGNED_VALUE;
 
+    /**
+     * Adds an argument to the field for the GraphQL Query.
+     */
+    ArgMapping[] arguments() default {};
+
 }
